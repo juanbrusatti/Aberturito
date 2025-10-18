@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { categories } from "@/constants/categories"
 import { StockAddDialog } from "../../utils/stock/stock-add-dialog"
 import { StockStats } from "../../utils/stock/stock-stats"
 import { StockLowAlert } from "../../utils/stock/stock-low-alert"
@@ -10,13 +9,15 @@ import { StockTable } from "../../utils/stock/stock-table"
 
 type StockItem = {
   id: string
-  name: string
-  category: string
-  material: "aluminio" | "pvc"
-  quantity: number
-  unit: string
-  minStock: number
-  location: string
+  categoria: string
+  tipo: string
+  linea: string
+  color: string
+  estado: "nuevo" | "Con Detalles" | "Dañado"
+  cantidad: number
+  ubicacion: string
+  largo: number
+  material: "aluminio" | "pvc" | "silicona"
   lastUpdate: string
 }
 
@@ -26,141 +27,101 @@ const initialStock: StockItem[] = [
   // Stock de Aluminio
   {
     id: "1",
-    name: "Perfil de Aluminio 6m",
-    category: "Perfiles",
+    categoria: "Perfiles",
+    tipo: "6034",
+    linea: "Linea modena",
+    color: "blanco alvar",
+    estado: "nuevo",
+    cantidad: 145,
+    ubicacion: "Depósito A",
+    largo: 6000,
     material: "aluminio",
-    quantity: 145,
-    unit: "unidades",
-    minStock: 50,
-    location: "Depósito A",
     lastUpdate: "2025-03-10",
   },
   {
     id: "2",
-    name: "Vidrio 4mm Transparente",
-    category: "Vidrios",
+    categoria: "Perfiles",
+    tipo: "6035",
+    linea: "linea modena 2",
+    color: "negro exa",
+    estado: "Con Detalles",
+    cantidad: 28,
+    ubicacion: "Depósito B",
+    largo: 3000,
     material: "aluminio",
-    quantity: 28,
-    unit: "m²",
-    minStock: 30,
-    location: "Depósito B",
     lastUpdate: "2025-03-09",
   },
   {
     id: "3",
-    name: "Silicona Transparente",
-    category: "Accesorios",
+    categoria: "Perfiles",
+    tipo: "6036",
+    linea: "Linea modena",
+    color: "blanco exa",
+    estado: "nuevo",
+    cantidad: 89,
+    ubicacion: "Depósito A",
+    largo: 6000,
     material: "aluminio",
-    quantity: 5,
-    unit: "tubos",
-    minStock: 20,
-    location: "Depósito C",
-    lastUpdate: "2025-03-08",
-  },
-  {
-    id: "4",
-    name: "Manijas Cromadas",
-    category: "Herrajes",
-    material: "aluminio",
-    quantity: 89,
-    unit: "unidades",
-    minStock: 30,
-    location: "Depósito A",
-    lastUpdate: "2025-03-10",
-  },
-  {
-    id: "5",
-    name: "Tornillos Autoperforantes",
-    category: "Herrajes",
-    material: "aluminio",
-    quantity: 450,
-    unit: "unidades",
-    minStock: 200,
-    location: "Depósito C",
-    lastUpdate: "2025-03-09",
-  },
-  {
-    id: "6",
-    name: "Burletes de Goma",
-    category: "Accesorios",
-    material: "aluminio",
-    quantity: 120,
-    unit: "metros",
-    minStock: 50,
-    location: "Depósito B",
     lastUpdate: "2025-03-10",
   },
   // Stock de PVC
   {
+    id: "4",
+    categoria: "Perfiles",
+    tipo: "6037",
+    linea: "linea modena 2",
+    color: "blanco alvar",
+    estado: "nuevo",
+    cantidad: 98,
+    ubicacion: "Depósito A",
+    largo: 6000,
+    material: "pvc",
+    lastUpdate: "2025-03-10",
+  },
+  {
+    id: "5",
+    categoria: "Perfiles",
+    tipo: "6038",
+    linea: "Linea modena",
+    color: "negro alvar",
+    estado: "Dañado",
+    cantidad: 35,
+    ubicacion: "Depósito B",
+    largo: 3000,
+    material: "pvc",
+    lastUpdate: "2025-03-09",
+  },
+  // Stock de Silicona
+  {
+    id: "6",
+    categoria: "Accesorios",
+    tipo: "SIL-001",
+    linea: "Silicona Premium",
+    color: "Transparente",
+    estado: "nuevo",
+    cantidad: 25,
+    ubicacion: "Depósito C",
+    largo: 300,
+    material: "silicona",
+    lastUpdate: "2025-03-10",
+  },
+  {
     id: "7",
-    name: "Perfil de PVC 6m Blanco",
-    category: "Perfiles",
-    material: "pvc",
-    quantity: 98,
-    unit: "unidades",
-    minStock: 40,
-    location: "Depósito A",
-    lastUpdate: "2025-03-10",
-  },
-  {
-    id: "8",
-    name: "Vidrio 4mm Transparente",
-    category: "Vidrios",
-    material: "pvc",
-    quantity: 35,
-    unit: "m²",
-    minStock: 25,
-    location: "Depósito B",
+    categoria: "Accesorios",
+    tipo: "SIL-002",
+    linea: "Silicona Premium",
+    color: "Blanco",
+    estado: "nuevo",
+    cantidad: 18,
+    ubicacion: "Depósito C",
+    largo: 300,
+    material: "silicona",
     lastUpdate: "2025-03-09",
-  },
-  {
-    id: "9",
-    name: "Silicona Blanca",
-    category: "Accesorios",
-    material: "pvc",
-    quantity: 12,
-    unit: "tubos",
-    minStock: 15,
-    location: "Depósito C",
-    lastUpdate: "2025-03-08",
-  },
-  {
-    id: "10",
-    name: "Manijas Blancas",
-    category: "Herrajes",
-    material: "pvc",
-    quantity: 67,
-    unit: "unidades",
-    minStock: 25,
-    location: "Depósito A",
-    lastUpdate: "2025-03-10",
-  },
-  {
-    id: "11",
-    name: "Tornillos para PVC",
-    category: "Herrajes",
-    material: "pvc",
-    quantity: 320,
-    unit: "unidades",
-    minStock: 150,
-    location: "Depósito C",
-    lastUpdate: "2025-03-09",
-  },
-  {
-    id: "12",
-    name: "Burletes de PVC",
-    category: "Accesorios",
-    material: "pvc",
-    quantity: 85,
-    unit: "metros",
-    minStock: 40,
-    location: "Depósito B",
-    lastUpdate: "2025-03-10",
   },
 ]
 
 interface StockManagementProps {
-  materialType?: "aluminio" | "pvc" | "all"
+  materialType?: "aluminio" | "pvc" | "silicona" | "all"
 }
 
 export function StockManagement({ materialType = "all" }: StockManagementProps) {
@@ -170,14 +131,17 @@ export function StockManagement({ materialType = "all" }: StockManagementProps) 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
 
   const filteredStock = stock.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = selectedCategory === "Perfiles" || item.category === selectedCategory
+    const matchesSearch = item.categoria.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.linea.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.color.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = selectedCategory === "Perfiles" || item.categoria === selectedCategory
     const matchesMaterial = materialType === "all" || item.material === materialType
     return matchesSearch && matchesCategory && matchesMaterial
   })
 
-  const lowStockItems = stock.filter((item) => item.quantity < item.minStock)
-  const totalItems = stock.reduce((sum, item) => sum + item.quantity, 0)
+  const lowStockItems = stock.filter((item) => item.cantidad < 10) // Cambiar a un valor fijo por ahora
+  const totalItems = stock.reduce((sum, item) => sum + item.cantidad, 0)
 
   // Títulos dinámicos según el tipo de material
   const getTitle = () => {
@@ -186,6 +150,8 @@ export function StockManagement({ materialType = "all" }: StockManagementProps) 
         return "Stock de Aluminio"
       case "pvc":
         return "Stock de PVC"
+      case "silicona":
+        return "Stock de Silicona"
       default:
         return "Gestión de Stock"
     }
@@ -197,6 +163,8 @@ export function StockManagement({ materialType = "all" }: StockManagementProps) 
         return "Control de inventario de productos de aluminio"
       case "pvc":
         return "Control de inventario de productos de PVC"
+      case "silicona":
+        return "Control de inventario de siliconas y selladores"
       default:
         return "Control de inventario y materiales"
     }
@@ -218,6 +186,7 @@ export function StockManagement({ materialType = "all" }: StockManagementProps) 
               setStock([...stock, { ...newItem, id: Date.now().toString() }])
               setIsAddDialogOpen(false)
             }}
+            materialType={materialType === "all" ? "aluminio" : materialType}
           />
         </div>
       </div>
@@ -225,7 +194,7 @@ export function StockManagement({ materialType = "all" }: StockManagementProps) 
       { /* stats */}
       <StockStats 
         totalItems={totalItems}
-        categoriesCount={categories.length - 1}
+        categoriesCount={5} // Número fijo de tipos por ahora
         lowStockCount={lowStockItems.length}
       />
 

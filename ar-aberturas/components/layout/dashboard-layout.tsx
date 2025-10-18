@@ -20,7 +20,8 @@ const navigation = [
     icon: Package,
     subItems: [
       { name: "Aluminio", href: "/stock/aluminio" },
-      { name: "PVC", href: "/stock/pvc" }
+      { name: "PVC", href: "/stock/pvc" },
+      { name: "Silicona", href: "/stock/silicona" }
     ]
   },
   { name: "Clientes", href: "/clientes", icon: Users },
@@ -58,6 +59,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const getStockMenuText = () => {
     if (pathname === "/stock/aluminio") return "Stock Aluminio"
     if (pathname === "/stock/pvc") return "Stock PVC"
+    if (pathname === "/stock/silicona") return "Stock Silicona"
     if (pathname === "/stock") return "Stock"
     return "Stock"
   }

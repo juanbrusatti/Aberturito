@@ -14,35 +14,65 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DynamicSelect } from "./dynamic-select"
 import { StockItem } from "../../components/business/stock-management"
-import { categories } from "@/constants/categories"
+import { tipos, lineas, colores, estados, ubicaciones, categorias } from "@/constants/categories"
 import { useState } from "react"
 
 interface StockAddDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSave: (item: Omit<StockItem, 'id'>) => void
+  materialType?: "aluminio" | "pvc" | "silicona"
 }
 
-export function StockAddDialog({ open, onOpenChange, onSave }: StockAddDialogProps) {
-  const [name, setName] = useState("")
-  const [category, setCategory] = useState("")
-  const [quantity, setQuantity] = useState(0)
-  const [unit, setUnit] = useState("")
-  const [minStock, setMinStock] = useState(0)
-  const [location, setLocation] = useState("")
+export function StockAddDialog({ open, onOpenChange, onSave, materialType = "aluminio" }: StockAddDialogProps) {
+  const [categoria, setCategoria] = useState("")
+  const [tipo, setTipo] = useState("")
+  const [linea, setLinea] = useState("")
+  const [color, setColor] = useState("")
+  const [estado, setEstado] = useState<"nuevo" | "Con Detalles" | "Dañado">("nuevo")
+  const [cantidad, setCantidad] = useState(0)
+  const [ubicacion, setUbicacion] = useState("")
+  const [largo, setLargo] = useState(0)
+
+  // Estados para las opciones dinámicas
+  const [categoriasOptions, setCategoriasOptions] = useState(categorias)
+  const [tiposOptions, setTiposOptions] = useState(tipos)
+  const [lineasOptions, setLineasOptions] = useState(lineas)
+  const [coloresOptions, setColoresOptions] = useState(colores)
+  const [ubicacionesOptions, setUbicacionesOptions] = useState(ubicaciones)
 
   const handleAddItem = () => {
-    // Lógica para agregar el item al stock
+    // Validar campos obligatorios
+    if (!categoria || !tipo || !linea || !color || !ubicacion || cantidad <= 0 || largo <= 0) {
+      alert("Por favor complete todos los campos obligatorios")
+      return
+    }
+
     onSave({ 
-      name, 
-      category, 
-      quantity, 
-      unit, 
-      minStock, 
-      location, 
-      lastUpdate: new Date().toISOString().split('T')[0] // Fecha actual en formato YYYY-MM-DD
+      categoria,
+      tipo,
+      linea,
+      color,
+      estado,
+      cantidad,
+      ubicacion,
+      largo,
+      material: materialType,
+      lastUpdate: new Date().toISOString().split('T')[0]
     })
+    
+    // Resetear formulario
+    setCategoria("")
+    setTipo("")
+    setLinea("")
+    setColor("")
+    setEstado("nuevo")
+    setCantidad(0)
+    setUbicacion("")
+    setLargo(0)
+    
     onOpenChange(false)
   }
 
@@ -54,104 +84,116 @@ export function StockAddDialog({ open, onOpenChange, onSave }: StockAddDialogPro
           Agregar Item
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-card">
-        <DialogHeader>
+      <DialogContent className="bg-card max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-foreground">Agregar nuevo item</DialogTitle>
           <DialogDescription className="text-muted-foreground">
             Ingrese los datos del nuevo material o producto
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="name" className="text-foreground">
-              Nombre
-            </Label>
-            <Input
-              id="name"
-              placeholder="Ej: Perfil de Aluminio"
-              className="bg-background"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+        <div className="overflow-y-auto flex-1 py-4 pr-2 -mr-2">
+          <div className="grid gap-4">
+            <DynamicSelect
+              label="Categoría"
+              value={categoria}
+              onValueChange={setCategoria}
+              options={categoriasOptions}
+              onAddOption={(newOption) => setCategoriasOptions([...categoriasOptions, newOption])}
+              placeholder="Seleccionar categoría"
             />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="category" className="text-foreground">
-              Categoría
+
+            <DynamicSelect
+              label="Tipo"
+              value={tipo}
+              onValueChange={setTipo}
+              options={tiposOptions}
+              onAddOption={(newOption) => setTiposOptions([...tiposOptions, newOption])}
+              placeholder="Seleccionar tipo"
+            />
+
+          <DynamicSelect
+            label="Línea"
+            value={linea}
+            onValueChange={setLinea}
+            options={lineasOptions}
+            onAddOption={(newOption) => setLineasOptions([...lineasOptions, newOption])}
+            placeholder="Seleccionar línea"
+          />
+
+          <DynamicSelect
+            label="Color"
+            value={color}
+            onValueChange={setColor}
+            options={coloresOptions}
+            onAddOption={(newOption) => setColoresOptions([...coloresOptions, newOption])}
+            placeholder="Seleccionar color"
+          />
+
+          <div className="grid gap-2 mb-2">
+            <Label htmlFor="estado" className="text-foreground">
+              Estado
             </Label>
-            <Select
-              value={category}
-              onValueChange={setCategory}
-            >
-              <SelectTrigger className="bg-background">
-                <SelectValue placeholder="Seleccionar categoría" />
+            <Select value={estado} onValueChange={(value: "nuevo" | "Con Detalles" | "Dañado") => setEstado(value)}>
+              <SelectTrigger className="bg-background w-full">
+                <SelectValue placeholder="Seleccionar estado" />
               </SelectTrigger>
-              <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
+              <SelectContent className="max-h-[200px] overflow-y-auto">
+                {estados.map((est) => (
+                  <SelectItem key={est} value={est}>
+                    {est}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="quantity" className="text-foreground">
-                Cantidad
-              </Label>
-              <Input
-                id="quantity"
-                type="number"
-                placeholder="0"
-                className="bg-background"
-                value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="unit" className="text-foreground">
-                Unidad
-              </Label>
-              <Input
-                id="unit"
-                placeholder="unidades"
-                className="bg-background"
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-              />
-            </div>
-          </div>
+
           <div className="grid gap-2">
-            <Label htmlFor="minStock" className="text-foreground">
-              Stock mínimo
+            <Label htmlFor="cantidad" className="text-foreground">
+              Cantidad *
             </Label>
             <Input
-              id="minStock"
+              id="cantidad"
               type="number"
               placeholder="0"
               className="bg-background"
-              value={minStock}
-              onChange={(e) => setMinStock(Number(e.target.value))}
+              value={cantidad || ""}
+              onChange={(e) => setCantidad(Number(e.target.value))}
+              required
             />
           </div>
+
+          <DynamicSelect
+            label="Ubicación"
+            value={ubicacion}
+            onValueChange={setUbicacion}
+            options={ubicacionesOptions}
+            onAddOption={(newOption) => setUbicacionesOptions([...ubicacionesOptions, newOption])}
+            placeholder="Seleccionar ubicación"
+          />
+
           <div className="grid gap-2">
-            <Label htmlFor="location" className="text-foreground">
-              Ubicación
+            <Label htmlFor="largo" className="text-foreground">
+              Largo (mm) *
             </Label>
             <Input
-              id="location"
-              placeholder="Ej: Depósito A"
+              id="largo"
+              type="number"
+              placeholder="0"
               className="bg-background"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              value={largo || ""}
+              onChange={(e) => setLargo(Number(e.target.value))}
+              required
             />
           </div>
+          </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex-shrink-0 pt-4 border-t border-border">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
             Cancelar
           </Button>
-          <Button onClick={handleAddItem}>Guardar</Button>
+          <Button onClick={handleAddItem} className="w-full sm:w-auto">
+            Guardar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
