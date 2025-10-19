@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { StockAddDialog } from "../../utils/stock/stock-add-dialog"
 import { StockStats } from "../../utils/stock/stock-stats"
 import { StockLowAlert } from "../../utils/stock/stock-low-alert"
 import { StockFilters } from "../../utils/stock/stock-filters"
 import { StockTable } from "../../utils/stock/stock-table"
+import { listStock, createStockItem, deleteStockItem, type StockItemRecord } from "@/lib/stock"
 
 type StockItem = {
   id: string
@@ -125,10 +126,46 @@ interface StockManagementProps {
 }
 
 export function StockManagement({ materialType = "all" }: StockManagementProps) {
-  const [stock, setStock] = useState<StockItem[]>(initialStock)
+  const [stock, setStock] = useState<StockItem[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("Perfiles")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Map DB record to UI StockItem
+  const mapRecordToUI = (r: StockItemRecord): StockItem => {
+    return {
+      id: String(r.id ?? ''),
+      categoria: String(r.categoria ?? 'Sin categoria'),
+      tipo: String(r.tipo ?? ''),
+      linea: String(r.linea ?? ''),
+      color: String(r.color ?? ''),
+      estado: (r.estado as any) ?? 'nuevo',
+      cantidad: Number(r.cantidad ?? 0),
+      ubicacion: String(r.ubicacion ?? ''),
+      largo: Number(r.largo ?? 0),
+      material: (r.material as any) ?? 'aluminio',
+      lastUpdate: String(r.last_update ?? ''),
+    }
+  }
+
+  useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      setLoading(true)
+      const { data, error } = await listStock()
+      if (!mounted) return
+      if (error) {
+        setError(error.message ?? String(error))
+      } else if (data) {
+        setStock(data.map(mapRecordToUI))
+      }
+      setLoading(false)
+    }
+    load()
+    return () => { mounted = false }
+  }, [])
 
   const filteredStock = stock.filter((item) => {
     const matchesSearch = item.categoria.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -182,8 +219,28 @@ export function StockManagement({ materialType = "all" }: StockManagementProps) 
           <StockAddDialog
             open={isAddDialogOpen}
             onOpenChange={setIsAddDialogOpen}
-            onSave={(newItem) => {
-              setStock([...stock, { ...newItem, id: Date.now().toString() }])
+            onSave={async (newItem) => {
+              // Prepare payload matching DB column names
+              const payload: Partial<StockItemRecord> = {
+                categoria: newItem.categoria,
+                tipo: newItem.tipo,
+                linea: newItem.linea,
+                color: newItem.color,
+                estado: newItem.estado,
+                cantidad: newItem.cantidad,
+                ubicacion: newItem.ubicacion,
+                largo: newItem.largo,
+                material: newItem.material,
+                last_update: newItem.lastUpdate,
+              }
+              const { data, error } = await createStockItem(payload)
+              if (error) {
+                setError(error.message ?? String(error))
+                return
+              }
+              if (data) {
+                setStock((s) => [...s, mapRecordToUI(data)])
+              }
               setIsAddDialogOpen(false)
             }}
             materialType={materialType === "all" ? "aluminio" : materialType}
@@ -210,11 +267,24 @@ export function StockManagement({ materialType = "all" }: StockManagementProps) 
       />
 
       { /* main table */}
-      <StockTable
-        filteredStock={filteredStock}
-        onEdit={(id) => {/* implement edit logic */}}
-        onDelete={(id) => setStock(stock.filter(item => item.id !== id))}
-      />
+      {loading ? (
+        <p>Cargando stock...</p>
+      ) : error ? (
+        <p className="text-destructive">Error: {error}</p>
+      ) : (
+        <StockTable
+          filteredStock={filteredStock}
+          onEdit={(id) => {/* implement edit logic */}}
+          onDelete={async (id) => {
+            const { error } = await deleteStockItem(id)
+            if (error) {
+              setError(error.message ?? String(error))
+              return
+            }
+            setStock((s) => s.filter(item => item.id !== id))
+          }}
+        />
+      )}
     </div>
   )
 }
